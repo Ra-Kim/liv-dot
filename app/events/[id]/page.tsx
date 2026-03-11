@@ -74,7 +74,7 @@ export default function EventDetailPage({ params }: EventDetailPageProps) {
                   event={event}
                   onOpenModal={openModal}
                 />
-                <ActionPanel event={event} />
+                 <ActionPanel event={event} onOpenModal={openModal} />
               </div>
             </div>
 

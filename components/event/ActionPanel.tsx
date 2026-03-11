@@ -1,6 +1,6 @@
 "use client";
 
-import { LiveDotEvent, EventState } from "@/types/event";
+import { LiveDotEvent, EventState, RequirementKey } from "@/types/event";
 import { getAvailableActions } from "@/lib/eventMachine";
 import { useTransitionState } from "@/hooks/useEventQueries";
 import { cn } from "@/lib/utils";
@@ -9,6 +9,7 @@ import { useState } from "react";
 
 interface ActionPanelProps {
   event: LiveDotEvent;
+  onOpenModal: (key: RequirementKey | "schedule") => void;
 }
 
 const VARIANT_STYLES = {
@@ -20,28 +21,38 @@ const VARIANT_STYLES = {
     "bg-zinc-800 text-zinc-300 border border-white/[0.07] hover:bg-zinc-700 disabled:opacity-40",
 };
 
-// Descriptions shown beneath the action panel per state
 const STATE_CONTEXT: Partial<Record<EventState, string>> = {
   draft: "Schedule the event to begin configuring production requirements.",
-  scheduled:
-    "Complete all checklist items to mark the event as ready for streaming.",
+  scheduled: "Complete all checklist items to mark the event as ready for streaming.",
   ready: "All systems go. You can start the live stream when ready.",
   live: "The event is currently streaming. End it when finished.",
   completed: "Enable replay so attendees can re-watch the event.",
   replay: "Replay is active. Attendees can watch the recording.",
 };
 
-export function ActionPanel({ event }: ActionPanelProps) {
+// Actions that should open a modal instead of directly transitioning state
+const MODAL_ACTIONS: Record<string, RequirementKey | "schedule"> = {
+  schedule: "schedule",
+};
+
+export function ActionPanel({ event, onOpenModal }: ActionPanelProps) {
   const actions = getAvailableActions(event);
   const { mutate: transitionState, isPending } = useTransitionState(event.id);
   const [confirmingAction, setConfirmingAction] = useState<string | null>(null);
 
-  // "End Event" is destructive — require a confirmation click
   function handleActionClick(actionId: string, targetState: EventState) {
+    // If this action has a dedicated modal, open it instead
+    if (MODAL_ACTIONS[actionId]) {
+      onOpenModal(MODAL_ACTIONS[actionId]);
+      return;
+    }
+
+    // "End Event" is destructive — require a confirmation click
     if (actionId === "end_event" && confirmingAction !== actionId) {
       setConfirmingAction(actionId);
       return;
     }
+
     setConfirmingAction(null);
     transitionState(targetState);
   }
@@ -67,9 +78,7 @@ export function ActionPanel({ event }: ActionPanelProps) {
         Actions
       </h2>
 
-      {context && (
-        <p className="mb-4 text-xs text-zinc-600">{context}</p>
-      )}
+      {context && <p className="mb-4 text-xs text-zinc-600">{context}</p>}
 
       <div className="space-y-3">
         {actions.map((action) => {
@@ -79,9 +88,7 @@ export function ActionPanel({ event }: ActionPanelProps) {
             <div key={action.id}>
               <button
                 disabled={action.blocked || isPending}
-                onClick={() =>
-                  handleActionClick(action.id, action.targetState)
-                }
+                onClick={() => handleActionClick(action.id, action.targetState)}
                 className={cn(
                   "group flex w-full items-center justify-between rounded-lg px-4 py-3 text-sm font-semibold transition-all",
                   VARIANT_STYLES[action.variant],
@@ -89,9 +96,7 @@ export function ActionPanel({ event }: ActionPanelProps) {
                   isConfirming && "ring-2 ring-red-500/40"
                 )}
               >
-                <span>
-                  {isConfirming ? "Confirm: End Event?" : action.label}
-                </span>
+                <span>{isConfirming ? "Confirm: End Event?" : action.label}</span>
                 {isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin opacity-60" />
                 ) : (
@@ -110,10 +115,7 @@ export function ActionPanel({ event }: ActionPanelProps) {
                   </div>
                   <ul className="space-y-0.5">
                     {action.blockedReasons.map((reason) => (
-                      <li
-                        key={reason}
-                        className="flex items-center gap-1.5 text-xs text-zinc-500"
-                      >
+                      <li key={reason} className="flex items-center gap-1.5 text-xs text-zinc-500">
                         <span className="h-1 w-1 rounded-full bg-zinc-600" />
                         {reason}
                       </li>
