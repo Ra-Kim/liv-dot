@@ -1,30 +1,36 @@
-import { Geist, Geist_Mono, Inter } from "next/font/google"
+import type { Metadata } from "next";
+import { Syne, DM_Mono } from "next/font/google";
+import { Providers } from "@/components/Providers";
+import "./globals.css";
 
-import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
-import { cn } from "@/lib/utils";
-
-const inter = Inter({subsets:['latin'],variable:'--font-sans'})
-
-const fontMono = Geist_Mono({
+const syne = Syne({
   subsets: ["latin"],
-  variable: "--font-mono",
-})
+  variable: "--font-syne",
+  display: "swap",
+});
+
+const dmMono = DM_Mono({
+  subsets: ["latin"],
+  weight: ["300", "400", "500"],
+  variable: "--font-dm-mono",
+  display: "swap",
+});
+
+export const metadata: Metadata = {
+  title: "LIV DOT — Host Dashboard",
+  description: "Manage your live events on LIV DOT",
+};
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", inter.variable)}
-    >
-      <body>
-        <ThemeProvider>{children}</ThemeProvider>
+    <html lang="en" className={`${syne.variable} ${dmMono.variable}`}>
+      <body className="min-h-screen bg-zinc-950 text-white antialiased font-display">
+        <Providers>{children}</Providers>
       </body>
     </html>
-  )
+  );
 }
