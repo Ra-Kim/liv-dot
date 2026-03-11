@@ -15,7 +15,6 @@ const READY_GATE_REQUIREMENTS: RequirementKey[] = [
   "crew_assigned",
   "ingest_configured",
   "pricing_configured",
-  "venue_confirmed",
   "tech_check_done",
 ];
 
